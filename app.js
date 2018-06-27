@@ -65,16 +65,20 @@ app.get('/', (request, response) => {
         queryString = 'SELECT * FROM pokemon ORDER BY id ASC';
     }
 
-    db.query(queryString, (err, result) => {
-        if (err) {
-            console.error('query error:', err.stack);
-        } else {
-            let pokeinfo = result.rows.map( pokemon => { return { "name": pokemon.name, "id": pokemon.id, "num": pokemon.num, "img": pokemon.img }; })
+    db.query(queryString)
+        .then( dbResponse => {
+            let pokeinfo = dbResponse.map( pokemon => {
+                return {
+                    "name": pokemon.name,
+                    "id": pokemon.id,
+                    "num": pokemon.num,
+                    "img": pokemon.img
+                };
+            })
             let context = { pokeinfo };
-            // pokeinfo = pokeinfo.sort(helpers.sortObject);
             response.render('home', context);
-        }
-    });
+        })
+        .catch( err => console.err(err) )
 });
 
 /** * ===================================

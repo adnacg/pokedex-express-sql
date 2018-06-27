@@ -29,28 +29,23 @@ module.exports = {
     pokemonCreate: (request, response) => {
         const queryString = 'INSERT INTO pokemon (name, img, weight, height) VALUES ($1, $2, $3, $4) RETURNING *';
         let values = [request.body.name,request.body.img,request.body.weight,request.body.height];
-        db.query(queryString, values, (err, res) => {
-            if (err) {
-                console.error('query error:', err.stack);
-            } else {
-                if (res.rows.length > 0) {
+        db.query(queryString, values)
+            .then( dbResponse => {
+                if (dbResponse.length > 0) {
                     const queryString2 = 'UPDATE pokemon SET num = $1 WHERE id = $2';
-                    let currentId = res.rows[0].id;
+                    let currentId = dbResponse.id;
                     let currentNum = helpers.generateNum(currentId);
                     let values2 = [currentNum, currentId];
-                    db.query(queryString2, values2, (err, result) => {
-                        if (err) {
-                            console.error('query error:', err.stack);
-                        } else {
-                            request.flash('success', 'Pokemon added successfully!');
-                            response.redirect('/');
-                        }
-                    })
+                    return db.query(queryString2, values2)
                 } else {
                     response.send('Error in creating pokemon');
                 }
-            }
-        })
+            })
+            .then( dbResponse => {
+                request.flash('success', 'Pokemon added successfully!');
+                response.redirect('/');
+            })
+            .catch( err => console.error(err) )
     },
 
     pokemonRead: (request, response) => {
