@@ -14,6 +14,7 @@
     "handlebars": "^4.0.11",
     "jsonfile": "^4.0.0",
     "method-override": "^2.3.10",
+    "pg": "^7.4.3",
     "react": "^16.4.1",
     "react-dom": "^16.4.1"
   }

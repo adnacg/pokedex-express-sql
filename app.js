@@ -6,7 +6,8 @@ const jsonfile = require('jsonfile');
 const flash = require('connect-flash');
 const session = require('express-session');
 
-const helpers = require("./helpers.js");
+const db = require("./db");
+const helpers = require("./helpers");
 // load the router module in the app
 const pokemon = require('./routes/pokemon');
 
@@ -57,17 +58,24 @@ app.use('/pokemon', pokemon);
 
 // Root handler
 app.get('/', (request, response) => {
-    jsonfile.readFile(FILE, (err, objRead) => {
-        let pokeinfo = objRead.pokemon.map( pokemon => { return { "name": pokemon.name, "id": pokemon.id, "num": pokemon.num, "img": pokemon.img }; })
-        let context;
-        if (request.query.sortby == "name") {
-            pokeinfo = pokeinfo.sort(helpers.sortObject);
-            context = { pokeinfo };
+
+    const queryString = 'SELECT * from pokemon'
+
+    db.query(queryString, (err, result) => {
+        if (err) {
+          console.error('query error:', err.stack);
         } else {
-            context = { pokeinfo };
+            let pokeinfo = result.rows.map( pokemon => { return { "name": pokemon.name, "id": pokemon.id, "num": pokemon.num, "img": pokemon.img }; })
+            let context;
+            if (request.query.sortby == "name") {
+                pokeinfo = pokeinfo.sort(helpers.sortObject);
+                context = { pokeinfo };
+            } else {
+                context = { pokeinfo };
+            }
+            response.render('home', context);
         }
-        response.render('home', context);
-    })
+    });
 });
 
 /** * ===================================

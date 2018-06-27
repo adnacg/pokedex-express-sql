@@ -1,4 +1,5 @@
-const helpers = require("../helpers.js");
+const helpers = require("../helpers");
+const db = require("../db");
 const jsonfile = require('jsonfile');
 const FILE = 'pokedex.json';
 
