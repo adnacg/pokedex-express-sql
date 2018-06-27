@@ -10,61 +10,78 @@ module.exports = {
 
     showEditPokemonForm: (request, response) => {
         let context;
-        jsonfile.readFile(FILE, (err, objRead) => {
-            let matchingPoke = objRead.pokemon.filter( pokemon => String(pokemon.id) === request.params.id);
-            if (matchingPoke) {
-                context = matchingPoke[0];
-                response.render('editpokeform', context);
+        const queryString = 'SELECT * FROM pokemon WHERE id = $1'
+        const value = [request.params.id];
+        db.query(queryString, value, (err, result) => {
+            if (err) {
+                console.error('query error:', err.stack);
             } else {
-                response.send("No matching pokemon to edit!");
+                if (result.rows.length > 0) {
+                    context = result.rows[0];
+                    response.render('editpokeform', context);
+                } else {
+                    response.send('No matching pokemon!');
+                }
             }
-        })
+        });
     },
 
     pokemonCreate: (request, response) => {
-        jsonfile.readFile(FILE, (err, objRead) => {
-            let pokeId = objRead.pokemon.map( pokemon => pokemon.id)
-            let nextPokeId = Math.max.apply(Math, pokeId) + 1;
-            let nextPokeNum = helpers.generateNum(nextPokeId);
-            let newPokemon = {
-                "id": nextPokeId,
-                "num": nextPokeNum,
-                "name": request.body.name,
-                "img": request.body.img,
-                "height": request.body.height,
-                "weight": request.body.weight,
-                "candy": "",
-                "candy_count": "",
-                "egg": "",
-                "avg_spawns": "",
-                "spawn_time": ""
+        const queryString = 'INSERT INTO pokemon (name, img, weight, height) VALUES ($1, $2, $3, $4) RETURNING *';
+        let values = [request.body.name,request.body.img,request.body.weight,request.body.height];
+        db.query(queryString, values, (err, res) => {
+            if (err) {
+                console.error('query error:', err.stack);
+            } else {
+                if (res.rows.length > 0) {
+                    const queryString2 = 'UPDATE pokemon SET num = $1 WHERE id = $2';
+                    let currentId = res.rows[0].id;
+                    let currentNum = helpers.generateNum(currentId);
+                    let values2 = [currentNum, currentId];
+                    db.query(queryString2, values2, (err, result) => {
+                        if (err) {
+                            console.error('query error:', err.stack);
+                        } else {
+                            request.flash('success', 'Pokemon added successfully!');
+                            response.redirect('/');
+                        }
+                    })
+                } else {
+                    response.send('Error in creating pokemon');
+                }
             }
-            objRead.pokemon.push(newPokemon);
-            jsonfile.writeFile(FILE, objRead, function(err) {});
-            request.flash('success', 'Pokemon added successfully!');
-            response.redirect('/');
         })
     },
 
     pokemonRead: (request, response) => {
-        // get json from specified file
-        jsonfile.readFile(FILE, (err, obj) => {
-            // obj is the object from the pokedex json file
-            // extract input data from request
-            let inputId = request.params.id;
-            // find pokemon by id from the pokedex json file
-            // (note: find() is a built-in method of JavaScript arrays)
-            let pokemon = obj.pokemon.find((currentPokemon) => {
-                return currentPokemon.id === parseInt(inputId, 10);
-            });
-            if (pokemon === undefined) {
-                // send 404 back
-                response.status(404);
-                response.send("not found");
+        const queryString = 'SELECT * from pokemon'
+        db.query(queryString, (err, result) => {
+            if (err) {
+                console.error('query error:', err.stack);
             } else {
-                response.send(pokemon);
+                let pokeinfo = result.rows.map( pokemon => { return { "name": pokemon.name, "id": pokemon.id, "num": pokemon.num, "img": pokemon.img }; })
+                let context;
+                if (request.query.sortby == "name") {
+                    pokeinfo = pokeinfo.sort(helpers.sortObject);
+                    context = { pokeinfo };
+                } else {
+                    context = { pokeinfo };
+                }
+                response.render('home', context);
             }
-        })
+        });
+        // jsonfile.readFile(FILE, (err, obj) => {
+        //     let inputId = request.params.id;
+        //     let pokemon = obj.pokemon.find((currentPokemon) => {
+        //         return currentPokemon.id === parseInt(inputId, 10);
+        //     });
+        //     if (pokemon === undefined) {
+        //         response.status(404);
+        //         response.send("not found");
+        //     } else {
+        //         response.send(pokemon);
+        //     }
+        // })
     },
 
     pokemonUpdate: (request, response) => {

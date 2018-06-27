@@ -58,12 +58,10 @@ app.use('/pokemon', pokemon);
 
 // Root handler
 app.get('/', (request, response) => {
-
     const queryString = 'SELECT * from pokemon'
-
     db.query(queryString, (err, result) => {
         if (err) {
-          console.error('query error:', err.stack);
+            console.error('query error:', err.stack);
         } else {
             let pokeinfo = result.rows.map( pokemon => { return { "name": pokemon.name, "id": pokemon.id, "num": pokemon.num, "img": pokemon.img }; })
             let context;
