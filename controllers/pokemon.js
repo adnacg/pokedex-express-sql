@@ -72,41 +72,30 @@ module.exports = {
     },
 
     pokemonUpdate: (request, response) => {
-        jsonfile.readFile(FILE, (err, objRead) => {
+        const queryString = 'UPDATE pokemon SET name = $1, img = $2, height = $3, weight = $4 WHERE id = $5';
+        const values = [request.body.name, request.body.img, request.body.height, request.body.weight, request.params.id];
+        db.query(queryString, values, (err, result) => {
             if (err) {
-                console.log(err);
+                console.error('query error:', err.stack);
             } else {
-                objRead.pokemon.forEach( pokemon => {
-                    if (String(pokemon.id) == request.params.id) {
-                        pokemon.name = request.body.name;
-                        pokemon.img = request.body.img;
-                        pokemon.height = request.body.height;
-                        pokemon.weight = request.body.weight;
-                    }
-                })
-                jsonfile.writeFile(FILE, objRead, function(err) {});
                 request.flash('success', 'Pokemon updated successfully!');
                 response.redirect('/');
             }
-        })
+        });
     },
 
     pokemonDelete: (request, response) => {
-        jsonfile.readFile(FILE, (err, objRead) => {
-            let pokemonFound = false;
-            objRead.pokemon.forEach( (pokemon, index, array) => {
-                if (String(pokemon.id) === request.params.id) {
-                    array.splice(index, 1);
-                    pokemonFound = true;
-                }
-            })
-            if (pokemonFound) {
-                jsonfile.writeFile(FILE, objRead, function(err) {});
-                request.flash('success', 'Pokemon deleted successfully!');
-            } else {
+        const queryString = 'DELETE FROM pokemon WHERE id = $1';
+        const value = [request.params.id];
+
+        db.query(queryString, value, (err, result) => {
+            if (err) {
+                console.error('query error:', err.stack);
                 request.flash('error', 'Pokemon was not found!');
+            } else {
+                request.flash('success', 'Pokemon deleted successfully!');
             }
             response.redirect('/');
-        })
+        });
     }
 }

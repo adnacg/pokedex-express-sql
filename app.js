@@ -58,19 +58,20 @@ app.use('/pokemon', pokemon);
 
 // Root handler
 app.get('/', (request, response) => {
-    const queryString = 'SELECT * FROM pokemon';
+    let queryString;
+    if (request.query.sortby == "name") {
+        queryString = 'SELECT * FROM pokemon ORDER BY name ASC';
+    } else {
+        queryString = 'SELECT * FROM pokemon ORDER BY id ASC';
+    }
+
     db.query(queryString, (err, result) => {
         if (err) {
             console.error('query error:', err.stack);
         } else {
             let pokeinfo = result.rows.map( pokemon => { return { "name": pokemon.name, "id": pokemon.id, "num": pokemon.num, "img": pokemon.img }; })
-            let context;
-            if (request.query.sortby == "name") {
-                pokeinfo = pokeinfo.sort(helpers.sortObject);
-                context = { pokeinfo };
-            } else {
-                context = { pokeinfo };
-            }
+            let context = { pokeinfo };
+            // pokeinfo = pokeinfo.sort(helpers.sortObject);
             response.render('home', context);
         }
     });
