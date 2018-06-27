@@ -58,7 +58,7 @@ app.use('/pokemon', pokemon);
 
 // Root handler
 app.get('/', (request, response) => {
-    const queryString = 'SELECT * from pokemon'
+    const queryString = 'SELECT * FROM pokemon';
     db.query(queryString, (err, result) => {
         if (err) {
             console.error('query error:', err.stack);

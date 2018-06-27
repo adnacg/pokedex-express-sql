@@ -10,7 +10,7 @@ module.exports = {
 
     showEditPokemonForm: (request, response) => {
         let context;
-        const queryString = 'SELECT * FROM pokemon WHERE id = $1'
+        const queryString = 'SELECT * FROM pokemon WHERE id = $1';
         const value = [request.params.id];
         db.query(queryString, value, (err, result) => {
             if (err) {
@@ -54,34 +54,21 @@ module.exports = {
     },
 
     pokemonRead: (request, response) => {
-        const queryString = 'SELECT * from pokemon'
-        db.query(queryString, (err, result) => {
+        const queryString = 'SELECT * FROM pokemon WHERE id = $1';
+        let value = [request.params.id];
+        db.query(queryString, value, (err, result) => {
             if (err) {
                 console.error('query error:', err.stack);
             } else {
-                let pokeinfo = result.rows.map( pokemon => { return { "name": pokemon.name, "id": pokemon.id, "num": pokemon.num, "img": pokemon.img }; })
-                let context;
-                if (request.query.sortby == "name") {
-                    pokeinfo = pokeinfo.sort(helpers.sortObject);
-                    context = { pokeinfo };
+                if (result.rows.length > 0) {
+                    let context = result.rows[0];
+                    response.send(context);
                 } else {
-                    context = { pokeinfo };
+                    response.status(404);
+                    response.send("not found");
                 }
-                response.render('home', context);
             }
         });
-        // jsonfile.readFile(FILE, (err, obj) => {
-        //     let inputId = request.params.id;
-        //     let pokemon = obj.pokemon.find((currentPokemon) => {
-        //         return currentPokemon.id === parseInt(inputId, 10);
-        //     });
-        //     if (pokemon === undefined) {
-        //         response.status(404);
-        //         response.send("not found");
-        //     } else {
-        //         response.send(pokemon);
-        //     }
-        // })
     },
 
     pokemonUpdate: (request, response) => {
